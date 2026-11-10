@@ -1,436 +1,105 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Cotações</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: #0a0e17;
-            color: #e2e8f0;
-            min-height: 100vh;
-            padding: 40px 20px;
-        }
-
-        .container { max-width: 1200px; margin: 0 auto; }
-
-        header { text-align: center; margin-bottom: 40px; }
-        header h1 { font-size: 32px; color: #fff; margin-bottom: 8px; }
-        header p { color: #94a3b8; font-size: 14px; }
-
-        .status-bar {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 30px;
-            padding: 8px 16px;
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid rgba(34, 197, 94, 0.3);
-            border-radius: 20px;
-            width: fit-content;
-            margin: 0 auto 30px;
-        }
-
-        .status-dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: #22c55e;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-
-        .status-text { font-size: 13px; color: #22c55e; font-weight: 500; }
-
-        .quotes-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .quote-card {
-            background: #111827;
-            border: 1px solid #1e2532;
-            border-radius: 16px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .card-header {
-            padding: 20px 24px;
-            border-bottom: 1px solid #1e2532;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .card-title { display: flex; align-items: center; gap: 10px; }
-
-        .card-icon {
-            width: 40px; height: 40px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            background: rgba(59, 130, 246, 0.2);
-        }
-
-        .card-info h2 { font-size: 18px; color: #fff; margin-bottom: 2px; }
-        .card-info span { font-size: 12px; color: #94a3b8; }
-
-        .badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-            background: rgba(59, 130, 246, 0.2);
-            color: #60a5fa;
-        }
-
-        .card-body { padding: 24px; display: flex; flex-direction: column; gap: 16px; }
-
-        .price-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-
-        .price { font-size: 34px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
-
-        .change {
-            font-size: 16px;
-            font-weight: 600;
-            font-variant-numeric: tabular-nums;
-            white-space: nowrap;
-        }
-
-        .change.up { color: #22c55e; }
-        .change.down { color: #ef4444; }
-        .change.neutral { color: #94a3b8; }
-
-        .change::before { content: attr(data-sign); }
-
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: #64748b;
-            border-top: 1px solid #1e2532;
-            padding-top: 12px;
-        }
-
-        .detail { display: flex; align-items: center; gap: 6px; }
-
-        .toolbar {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border-radius: 10px;
-            border: none;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(30, 41, 59, 0.8);
-            border: 1px solid #2a3548;
-            color: #e2e8f0;
-        }
-
-        .btn:hover { background: rgba(30, 41, 59, 1); border-color: #3b82f6; }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            color: #fff;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4);
-        }
-
-        .info-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 24px;
-            background: rgba(15, 23, 42, 0.5);
-            border-top: 1px solid #1e2532;
-            font-size: 12px;
-            color: #64748b;
-        }
-
-        .live-indicator {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .live-dot {
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: #22c55e;
-            animation: blink 1.5s infinite;
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        .last-update { text-align: center; font-size: 12px; color: #64748b; margin-top: 20px; }
-
-        .skeleton {
-            height: 30px;
-            background: linear-gradient(90deg, #1e2532 25%, #2a3548 50%, #1e2532 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-            border-radius: 6px;
-        }
-
-        @keyframes shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-
-        .debug {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            max-height: 200px;
-            overflow: auto;
-            background: #000;
-            color: #0f0;
-            font-family: monospace;
-            font-size: 11px;
-            padding: 10px;
-            display: none;
-            z-index: 9999;
-        }
-
-        .debug.show { display: block; }
-
-        .debug-entry { margin: 2px 0; border-bottom: 1px solid #1a1a1a; padding-bottom: 2px; }
-        .debug-error { color: #ff5555; }
-        .debug-ok { color: #55ff55; }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Panorama de Ativos — 10/nov/2026</title>
+<style>
+:root{
+  --bg:#f5f6f8;--surface:#fff;--text:#14171c;--muted:#5d6673;--border:#e2e5ea;
+  --up:#0b8a4a;--down:#c62d3b;--bar-track:#eceff3;--accent:#2f5bea;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0e1116;--surface:#171b22;--text:#e8ebf0;--muted:#98a2b3;--border:#262c36;
+    --up:#3ddc84;--down:#ff6b78;--bar-track:#232935;--accent:#7b9bff;color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0e1116;--surface:#171b22;--text:#e8ebf0;--muted:#98a2b3;--border:#262c36;
+  --up:#3ddc84;--down:#ff6b78;--bar-track:#232935;--accent:#7b9bff;color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.45}
+main{max-width:1000px;margin:0 auto;padding:24px 16px 40px}
+header h1{font-size:1.5rem;margin:0 0 4px}
+header p{margin:0;color:var(--muted);font-size:.9rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:20px 0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+.card .name{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:flex;justify-content:space-between;gap:8px}
+.card .price{font-size:1.65rem;font-weight:700;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+.chg{font-weight:600;font-variant-numeric:tabular-nums}
+.up{color:var(--up)}.down{color:var(--down)}
+.card .sub{font-size:.78rem;color:var(--muted);margin-top:6px}
+section.panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px}
+section.panel h2{font-size:1rem;margin:0 0 12px}
+.row{display:grid;grid-template-columns:110px 1fr 70px;align-items:center;gap:10px;margin:8px 0;font-size:.85rem}
+.track{position:relative;height:10px;background:var(--bar-track);border-radius:6px}
+.track::after{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--muted);opacity:.6}
+.bar{position:absolute;top:0;bottom:0;border-radius:6px}
+.bar.up{background:var(--up)}.bar.down{background:var(--down)}
+.row .v{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+ul{margin:0;padding-left:18px;font-size:.88rem}
+li{margin:6px 0}
+.note{font-size:.76rem;color:var(--muted);margin-top:10px}
+@media (max-width:480px){.row{grid-template-columns:90px 1fr 62px}}
+</style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>💵 Dólar Comercial</h1>
-            <p>Cotação USD-BRL em tempo real</p>
-        </header>
+<main>
+  <header>
+    <h1>Panorama de ativos</h1>
+    <p>Terça-feira, 10 de novembro de 2026 · fechamentos de 9/nov (bolsas e DXY) e cotações da manhã de 10/nov (BTC e câmbio)</p>
+  </header>
 
-        <div class="status-bar">
-            <div class="status-dot"></div>
-            <span class="status-text" id="statusText">● Carregando...</span>
-        </div>
+  <div class="grid" id="grid"></div>
 
-        <div class="toolbar">
-            <button class="btn btn-primary" id="btnRefresh" onclick="loadPrice()">
-                🔄 Atualizar agora
-            </button>
-            <button class="btn" id="btnDebug" onclick="toggleDebug()">🐛 Debug</button>
-        </div>
+  <section class="panel">
+    <h2>Variação do dia (%)</h2>
+    <div id="bars"></div>
+    <p class="note">Bitcoin: variação em 24 h. EWZ: aproximada, sobre o fechamento de 6/nov. Demais: variação no pregão de 9/nov.</p>
+  </section>
 
-        <div class="quotes-container">
-            <div class="quote-card" id="card-usdbrl">
-                <div class="card-header">
-                    <div class="card-title">
-                        <div class="card-icon">💵</div>
-                        <div class="card-info">
-                            <h2>Dólar Comercial</h2>
-                            <span>USD-BRL</span>
-                        </div>
-                    </div>
-                    <span class="badge">Câmbio</span>
-                </div>
-                <div class="card-body">
-                    <div class="price-row">
-                        <div class="price skeleton" id="price-usdbrl">--</div>
-                        <div class="change neutral skeleton" id="change-usdbrl" data-sign="+">--</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail"><span>Var. %</span><span id="pct-usdbrl">--</span></div>
-                        <div class="detail"><span>Atualizado</span><span id="time-usdbrl">--</span></div>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <section class="panel">
+    <h2>O que moveu o mercado</h2>
+    <ul>
+      <li>Rali de alívio liderado pela queda do petróleo: o S&amp;P 500 teve o melhor dia desde 8 de abril e recuperou boa parte da queda da semana passada.</li>
+      <li>O dólar perdeu força no exterior (DXY −0,56%), enquanto o dólar comercial no Brasil ficou praticamente estável em R$ 5,50.</li>
+      <li>O Ibovespa subiu cerca de 2% após três semanas seguidas de queda.</li>
+      <li>Bitcoin ficou de fora do rali: segue perto de US$ 75 mil, com saídas líquidas de ETFs à vista em novembro e mínima recente em torno de US$ 73,7 mil.</li>
+      <li>Nvidia caiu cerca de 4% em meio à investigação sobre reportagens envolvendo seu CEO; o VIX fechou abaixo de 20 (19,92).</li>
+      <li>Hoje saem os dados de inflação (CPI) de outubro nos EUA, que podem mexer com juros e dólar.</li>
+    </ul>
+  </section>
 
-        <div class="info-bar">
-            <div class="live-indicator" id="liveIndicator">
-                <div class="live-dot"></div>
-                <span>Conectando...</span>
-            </div>
-            <span id="sourceText">Fonte: API pública</span>
-        </div>
+  <p class="note">Snapshot estático montado a partir de fontes públicas (Metrópoles, DGABC, CNBC, Yahoo Finance, FXStreet, Fortune, CoinGecko e outras); valores podem diferir ligeiramente entre fontes e não são cotações em tempo real. Não é recomendação de investimento.</p>
+</main>
 
-        <div class="last-update" id="lastUpdate">Aguardando dados...</div>
-    </div>
-
-    <div class="debug" id="debugPanel">
-        <div id="debugLog"></div>
-    </div>
-
-    <script>
-        let debugEnabled = false;
-
-        const statusText = document.getElementById('statusText');
-        const lastUpdate = document.getElementById('lastUpdate');
-        const btnRefresh = document.getElementById('btnRefresh');
-        const btnDebug = document.getElementById('btnDebug');
-        const debugPanel = document.getElementById('debugPanel');
-        const debugLog = document.getElementById('debugLog');
-
-        function debug(msg, type = 'info') {
-            console.log(`[Dashboard] ${msg}`);
-            if (!debugEnabled) return;
-            const entry = document.createElement('div');
-            entry.className = `debug-entry ${type === 'error' ? 'debug-error' : type === 'ok' ? 'debug-ok' : ''}`;
-            entry.textContent = `[${new Date().toLocaleTimeString('pt-BR')}] ${msg}`;
-            debugLog.prepend(entry);
-            debugPanel.classList.add('show');
-        }
-
-        function toggleDebug() {
-            debugEnabled = !debugEnabled;
-            debugPanel.classList.toggle('show');
-            btnDebug.textContent = debugEnabled ? '🐛 Debug ON' : '🐛 Debug';
-        }
-
-        function fmtMoney(v, decimals = 2) {
-            return v.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-        }
-
-        function fmtPct(v) {
-            const abs = Math.abs(v).toFixed(2);
-            return v >= 0 ? `+${abs}%` : `-${abs}%`;
-        }
-
-        function setPrice(price, change, pct, real = false) {
-            const priceEl = document.getElementById('price-usdbrl');
-            const changeEl = document.getElementById('change-usdbrl');
-            const pctEl = document.getElementById('pct-usdbrl');
-            const timeEl = document.getElementById('time-usdbrl');
-
-            priceEl.textContent = fmtMoney(price);
-            priceEl.className = 'price';
-            const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-            timeEl.textContent = now;
-
-            changeEl.className = 'change';
-            if (change > 0) {
-                changeEl.classList.add('up');
-                changeEl.setAttribute('data-sign', '+');
-                changeEl.textContent = `+${fmtMoney(change, 2)}`;
-                pctEl.textContent = `(${fmtPct(pct)})`;
-                pctEl.className = 'up';
-            } else if (change < 0) {
-                changeEl.classList.add('down');
-                changeEl.setAttribute('data-sign', '−');
-                changeEl.textContent = `−${fmtMoney(Math.abs(change), 2)}`;
-                pctEl.textContent = `(${fmtPct(pct)})`;
-                pctEl.className = 'down';
-            } else {
-                changeEl.classList.add('neutral');
-                changeEl.setAttribute('data-sign', '');
-                changeEl.textContent = fmtMoney(0, 2);
-                pctEl.textContent = '(0.00%)';
-                pctEl.className = 'neutral';
-            }
-        }
-
-        async function fetchJson(url, timeoutMs = 10000) {
-            const ctrl = new AbortController();
-            const to = setTimeout(() => ctrl.abort(), timeoutMs);
-            const res = await fetch(url, {
-                signal: ctrl.signal,
-                headers: {
-                    Accept: 'application/json',
-                    'Cache-Control': 'no-cache',
-                    'User-Agent': 'Mozilla/5.0'
-                }
-            });
-            clearTimeout(to);
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            return res.json();
-        }
-
-        async function loadPrice() {
-            btnRefresh.disabled = true;
-            btnRefresh.textContent = '⏳ Atualizando...';
-            statusText.textContent = 'Carregando...';
-            lastUpdate.textContent = 'Atualizando...';
-
-            let loaded = false;
-
-            // Tentativa 1: AwesomeAPI
-            try {
-                debug('Tentando AwesomeAPI...');
-                const data = await fetchJson('https://economia.awesomeapi.com.br/json/last/USD-BRL');
-                const item = data.USDBRL;
-                const bid = parseFloat(item.bid);
-                const change = parseFloat(item.varBid) || 0;
-                const pct = parseFloat(item.pctChange) || 0;
-                setPrice(bid, change, pct, true);
-                statusText.textContent = 'Tempo real';
-                lastUpdate.textContent = 'Última atualização: ' + new Date().toLocaleString('pt-BR');
-                debug('AwesomeAPI OK: ' + bid, 'ok');
-                loaded = true;
-            } catch (e) {
-                debug('AwesomeAPI falhou: ' + e.message, 'error');
-            }
-
-            // Tentativa 2: Frankfurter (USD->BRL)
-            if (!loaded) {
-                try {
-                    debug('Tentando Frankfurter...');
-                    const data = await fetchJson('https://api.frankfurter.app/latest?from=USD&to=BRL');
-                    const bid = data.rates.BRL;
-                    setPrice(bid, 0, 0, true);
-                    statusText.textContent = 'Tempo real';
-                    lastUpdate.textContent = 'Última atualização: ' + new Date().toLocaleString('pt-BR');
-                    debug('Frankfurter OK: ' + bid, 'ok');
-                    loaded = true;
-                } catch (e) {
-                    debug('Frankfurter falhou: ' + e.message, 'error');
-                }
-            }
-
-            // Fallback: simulação
-            if (!loaded) {
-                const base = 5.2340;
-                const drift = (Math.random() - 0.5) * 0.02;
-                const newPrice = base * (1 + drift);
-                const change = newPrice - base;
-                const pct = (change / base) * 100;
-                setPrice(newPrice, change, pct, false);
-                statusText.textContent = 'Modo demo (sem rede)';
-                lastUpdate.textContent = 'Última atualização: ' + new Date().toLocaleString('pt-BR');
-                debug('Modo demo ativado', 'error');
-            }
-
-            btnRefresh.disabled = false;
-            btnRefresh.textContent = '🔄 Atualizar agora';
-        }
-
-        loadPrice();
-        setInterval(loadPrice, 30000);
-    </script>
+<script>
+var data=[
+ {n:"Dólar (USD/BRL)",tag:"Câmbio",p:"R$ 5,505",c:-0.06,s:"Dólar comercial · fech. 9/nov"},
+ {n:"Bitcoin",tag:"Cripto",p:"US$ 74.600",c:-0.38,s:"≈ R$ 410 mil · −10% em 30 dias"},
+ {n:"Ibovespa",tag:"Brasil",p:"171.907 pts",c:2.02,s:"Fech. 9/nov"},
+ {n:"DXY",tag:"Dólar global",p:"101,71",c:-0.56,s:"Fech. 9/nov · ~101,8 hoje cedo"},
+ {n:"EWZ",tag:"ETF Brasil",p:"US$ 32,55",c:1.8,s:"Aprox. · fech. 6/nov: US$ 31,98"},
+ {n:"Nasdaq Composite",tag:"EUA",p:"25.253,14",c:2.74,s:"Nasdaq 100: 27.907,63 (+3,40%)"},
+ {n:"S&P 500",tag:"EUA",p:"7.549,94",c:2.35,s:"3,4% abaixo da máxima de outubro"}
+];
+function fmt(c){return (c>0?"+":c<0?"−":"")+Math.abs(c).toFixed(2).replace(".",",")+"%"}
+var g=document.getElementById("grid"),b=document.getElementById("bars"),max=3;
+data.forEach(function(d){
+  var cls=d.c>=0?"up":"down",arrow=d.c>=0?"▲":"▼";
+  g.insertAdjacentHTML("beforeend",
+   '<div class="card"><div class="name"><span>'+d.n+'</span><span>'+d.tag+'</span></div>'+
+   '<div class="price">'+d.p+'</div><div class="chg '+cls+'">'+arrow+" "+fmt(d.c)+'</div>'+
+   '<div class="sub">'+d.s+'</div></div>');
+  var w=Math.min(Math.abs(d.c)/max,1)*50;
+  var st=d.c>=0?"left:50%;width:"+w+"%":"right:50%;width:"+w+"%";
+  b.insertAdjacentHTML("beforeend",
+   '<div class="row"><span>'+d.n.replace(" (USD/BRL)","")+'</span><div class="track"><div class="bar '+cls+'" style="'+st+'"></div></div><span class="v '+cls+'">'+fmt(d.c)+'</span></div>');
+});
+</script>
 </body>
 </html>
