@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Panorama de Ativos — 10/nov/2026</title>
+<meta name="theme-color" content="#f5f6f8">
+<title>Panorama de Ativos</title>
 <style>
 :root{
   --bg:#f5f6f8;--surface:#fff;--text:#14171c;--muted:#5d6673;--border:#e2e5ea;
@@ -26,16 +27,22 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-appl
 main{max-width:1000px;margin:0 auto;padding:24px 16px 40px}
 header h1{font-size:1.5rem;margin:0 0 4px}
 header p{margin:0;color:var(--muted);font-size:.9rem}
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:14px}
+#connection{font-size:.8rem;color:var(--muted)}
+button{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:9px;padding:8px 12px;font:inherit;font-size:.82rem;cursor:pointer}
+button:disabled{opacity:.55;cursor:wait}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:20px 0}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;min-width:0}
 .card .name{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;display:flex;justify-content:space-between;gap:8px}
-.card .price{font-size:1.65rem;font-weight:700;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+.card .price{font-size:1.65rem;font-weight:700;margin:6px 0 2px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .chg{font-weight:600;font-variant-numeric:tabular-nums}
 .up{color:var(--up)}.down{color:var(--down)}
 .card .sub{font-size:.78rem;color:var(--muted);margin-top:6px}
+.card .meta{display:flex;justify-content:space-between;gap:8px;margin-top:10px;padding-top:8px;border-top:1px solid var(--border);font-size:.7rem;color:var(--muted)}
+.status{font-weight:650}.status.ok{color:var(--up)}.status.err{color:var(--down)}.status.wait{color:var(--muted)}
 section.panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px}
 section.panel h2{font-size:1rem;margin:0 0 12px}
-.row{display:grid;grid-template-columns:110px 1fr 70px;align-items:center;gap:10px;margin:8px 0;font-size:.85rem}
+.row{display:grid;grid-template-columns:140px 1fr 75px;align-items:center;gap:10px;margin:8px 0;font-size:.85rem}
 .track{position:relative;height:10px;background:var(--bar-track);border-radius:6px}
 .track::after{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--muted);opacity:.6}
 .bar{position:absolute;top:0;bottom:0;border-radius:6px}
@@ -44,62 +51,157 @@ section.panel h2{font-size:1rem;margin:0 0 12px}
 ul{margin:0;padding-left:18px;font-size:.88rem}
 li{margin:6px 0}
 .note{font-size:.76rem;color:var(--muted);margin-top:10px}
-@media (max-width:480px){.row{grid-template-columns:90px 1fr 62px}}
+.errorbox{display:none;padding:10px 12px;margin:12px 0;border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:.82rem}
+.errorbox.show{display:block}
+@media (max-width:480px){.row{grid-template-columns:100px 1fr 65px}.card .price{font-size:1.45rem}}
 </style>
 </head>
 <body>
 <main>
   <header>
     <h1>Panorama de ativos</h1>
-    <p>Terça-feira, 10 de novembro de 2026 · fechamentos de 9/nov (bolsas e DXY) e cotações da manhã de 10/nov (BTC e câmbio)</p>
+    <p>Cotações obtidas de provedores externos. A disponibilidade e o atraso dependem da fonte e do horário de negociação.</p>
   </header>
-
-  <div class="grid" id="grid"></div>
-
+  <div class="toolbar">
+    <span id="connection" role="status">Conectando ao servidor de cotações…</span>
+    <button id="refresh" type="button">Atualizar agora</button>
+  </div>
+  <div id="errorbox" class="errorbox" role="alert"></div>
+  <div class="grid" id="grid" aria-live="polite"></div>
   <section class="panel">
-    <h2>Variação do dia (%)</h2>
+    <h2>Variação do dia / período informado pela fonte (%)</h2>
     <div id="bars"></div>
-    <p class="note">Bitcoin: variação em 24 h. EWZ: aproximada, sobre o fechamento de 6/nov. Demais: variação no pregão de 9/nov.</p>
+    <p class="note">As variações usam o período fornecido por cada provedor. Para ações e índices, pode representar a variação desde o fechamento anterior; para Bitcoin, 24 horas.</p>
   </section>
-
   <section class="panel">
-    <h2>O que moveu o mercado</h2>
+    <h2>Sobre as cotações</h2>
     <ul>
-      <li>Rali de alívio liderado pela queda do petróleo: o S&amp;P 500 teve o melhor dia desde 8 de abril e recuperou boa parte da queda da semana passada.</li>
-      <li>O dólar perdeu força no exterior (DXY −0,56%), enquanto o dólar comercial no Brasil ficou praticamente estável em R$ 5,50.</li>
-      <li>O Ibovespa subiu cerca de 2% após três semanas seguidas de queda.</li>
-      <li>Bitcoin ficou de fora do rali: segue perto de US$ 75 mil, com saídas líquidas de ETFs à vista em novembro e mínima recente em torno de US$ 73,7 mil.</li>
-      <li>Nvidia caiu cerca de 4% em meio à investigação sobre reportagens envolvendo seu CEO; o VIX fechou abaixo de 20 (19,92).</li>
-      <li>Hoje saem os dados de inflação (CPI) de outubro nos EUA, que podem mexer com juros e dólar.</li>
+      <li>Bitcoin: preço agregado em USD pela CoinGecko; o equivalente em BRL é calculado com a cotação USD/BRL obtida separadamente.</li>
+      <li>Dólar: cotação comercial USD/BRL da AwesomeAPI.</li>
+      <li>Ibovespa, DXY, EWZ, Nasdaq Composite e S&amp;P 500: dados de mercado disponibilizados pelo Yahoo Finance, via endpoint de gráfico consultado pelo backend.</li>
+      <li>O preço exibido é o último preço disponibilizado pela fonte, não uma garantia de execução ou preço de negociação.</li>
     </ul>
+    <p class="note">Dados para acompanhamento informativo. Pode haver atraso, indisponibilidade, divergência entre provedores e restrições de licença. Não é recomendação de investimento.</p>
   </section>
-
-  <p class="note">Snapshot estático montado a partir de fontes públicas (Metrópoles, DGABC, CNBC, Yahoo Finance, FXStreet, Fortune, CoinGecko e outras); valores podem diferir ligeiramente entre fontes e não são cotações em tempo real. Não é recomendação de investimento.</p>
 </main>
-
 <script>
-var data=[
- {n:"Dólar (USD/BRL)",tag:"Câmbio",p:"R$ 5,505",c:-0.06,s:"Dólar comercial · fech. 9/nov"},
- {n:"Bitcoin",tag:"Cripto",p:"US$ 74.600",c:-0.38,s:"≈ R$ 410 mil · −10% em 30 dias"},
- {n:"Ibovespa",tag:"Brasil",p:"171.907 pts",c:2.02,s:"Fech. 9/nov"},
- {n:"DXY",tag:"Dólar global",p:"101,71",c:-0.56,s:"Fech. 9/nov · ~101,8 hoje cedo"},
- {n:"EWZ",tag:"ETF Brasil",p:"US$ 32,55",c:1.8,s:"Aprox. · fech. 6/nov: US$ 31,98"},
- {n:"Nasdaq Composite",tag:"EUA",p:"25.253,14",c:2.74,s:"Nasdaq 100: 27.907,63 (+3,40%)"},
- {n:"S&P 500",tag:"EUA",p:"7.549,94",c:2.35,s:"3,4% abaixo da máxima de outubro"}
-];
-function fmt(c){return (c>0?"+":c<0?"−":"")+Math.abs(c).toFixed(2).replace(".",",")+"%"}
-var g=document.getElementById("grid"),b=document.getElementById("bars"),max=3;
-data.forEach(function(d){
-  var cls=d.c>=0?"up":"down",arrow=d.c>=0?"▲":"▼";
-  g.insertAdjacentHTML("beforeend",
-   '<div class="card"><div class="name"><span>'+d.n+'</span><span>'+d.tag+'</span></div>'+
-   '<div class="price">'+d.p+'</div><div class="chg '+cls+'">'+arrow+" "+fmt(d.c)+'</div>'+
-   '<div class="sub">'+d.s+'</div></div>');
-  var w=Math.min(Math.abs(d.c)/max,1)*50;
-  var st=d.c>=0?"left:50%;width:"+w+"%":"right:50%;width:"+w+"%";
-  b.insertAdjacentHTML("beforeend",
-   '<div class="row"><span>'+d.n.replace(" (USD/BRL)","")+'</span><div class="track"><div class="bar '+cls+'" style="'+st+'"></div></div><span class="v '+cls+'">'+fmt(d.c)+'</span></div>');
-});
+const API_BASE = ""; // mesmo domínio do backend. Em outro domínio, informe a URL base da API.
+const REFRESH_MS = 60000;
+const grid = document.getElementById("grid");
+const bars = document.getElementById("bars");
+const connection = document.getElementById("connection");
+const errorbox = document.getElementById("errorbox");
+const refreshButton = document.getElementById("refresh");
+let previous = {};
+
+const numberFmt = (value, digits=2) => new Intl.NumberFormat("pt-BR", {
+  minimumFractionDigits: digits, maximumFractionDigits: digits
+}).format(value);
+function money(value, currency, digits) {
+  try {
+    return new Intl.NumberFormat("pt-BR", {style:"currency",currency,maximumFractionDigits:digits ?? 2}).format(value);
+  } catch { return `${numberFmt(value)} ${currency}`; }
+}
+function pct(value) {
+  if (value === null || value === undefined || !Number.isFinite(Number(value))) return "—";
+  const n = Number(value);
+  return `${n > 0 ? "+" : n < 0 ? "−" : ""}${numberFmt(Math.abs(n))}%`;
+}
+function timeLabel(iso) {
+  if (!iso) return "horário não informado";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "horário não informado";
+  return d.toLocaleString("pt-BR", {dateStyle:"short",timeStyle:"short"});
+}
+function safeText(s) { return String(s ?? ""); }
+
+function render(items) {
+  grid.replaceChildren();
+  bars.replaceChildren();
+  const validChanges = items.map(x => Math.abs(Number(x.changePct) || 0));
+  const max = Math.max(3, ...validChanges);
+  for (const item of items) {
+    const hasPrice = Number.isFinite(Number(item.price)) && item.price !== null;
+    const hasChange = Number.isFinite(Number(item.changePct)) && item.changePct !== null;
+    const positive = Number(item.changePct) >= 0;
+    const cls = positive ? "up" : "down";
+    const card = document.createElement("article");
+    card.className = "card";
+
+    const name = document.createElement("div");
+    name.className = "name";
+    const n = document.createElement("span"); n.textContent = safeText(item.name);
+    const tag = document.createElement("span"); tag.textContent = safeText(item.tag);
+    name.append(n,tag);
+
+    const price = document.createElement("div");
+    price.className = "price";
+    price.textContent = hasPrice ? (item.displayPrice || money(Number(item.price), item.currency || "USD")) : "Indisponível";
+
+    const change = document.createElement("div");
+    change.className = "chg " + (hasChange ? cls : "");
+    change.textContent = hasChange ? `${positive ? "▲" : "▼"} ${pct(item.changePct)}` : "Variação indisponível";
+
+    const sub = document.createElement("div");
+    sub.className = "sub";
+    sub.textContent = safeText(item.description || item.source || "");
+
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    const updated = document.createElement("span"); updated.textContent = timeLabel(item.timestamp);
+    const status = document.createElement("span");
+    status.className = "status " + (item.ok ? "ok" : "err");
+    status.textContent = item.ok ? "● atualizado" : "● falha na fonte";
+    meta.append(updated,status);
+    card.append(name,price,change,sub,meta);
+    grid.append(card);
+
+    const row = document.createElement("div"); row.className = "row";
+    const label = document.createElement("span"); label.textContent = safeText(item.name);
+    const track = document.createElement("div"); track.className = "track";
+    if (hasChange) {
+      const bar = document.createElement("div");
+      bar.className = "bar " + cls;
+      const width = Math.min(Math.abs(Number(item.changePct)) / max, 1) * 50;
+      bar.style.width = width + "%";
+      if (positive) bar.style.left = "50%"; else bar.style.right = "50%";
+      track.append(bar);
+    }
+    const value = document.createElement("span"); value.className = "v " + (hasChange ? cls : "");
+    value.textContent = pct(item.changePct);
+    row.append(label,track,value); bars.append(row);
+  }
+}
+async function refresh() {
+  refreshButton.disabled = true;
+  connection.textContent = "Atualizando cotações…";
+  errorbox.classList.remove("show");
+  try {
+    const response = await fetch(`${API_BASE}/api/quotes`, {cache:"no-store"});
+    if (!response.ok) throw new Error(`Servidor respondeu HTTP ${response.status}`);
+    const payload = await response.json();
+    if (!Array.isArray(payload.assets)) throw new Error("Resposta do servidor em formato inesperado.");
+    render(payload.assets);
+    const failed = payload.assets.filter(x => !x.ok);
+    connection.textContent = `Consulta concluída às ${timeLabel(payload.generatedAt)} · atualização automática a cada ${REFRESH_MS/1000}s`;
+    if (failed.length) {
+      errorbox.textContent = `Não foi possível obter: ${failed.map(x=>x.name).join(", ")}. Os cartões mostram indisponibilidade em vez de reutilizar valores antigos.`;
+      errorbox.classList.add("show");
+    }
+  } catch (error) {
+    connection.textContent = "Não foi possível conectar ao backend.";
+    errorbox.textContent = `${error.message}. Verifique se o servidor está iniciado e se o endereço /api/quotes está acessível.`;
+    errorbox.classList.add("show");
+    if (!grid.children.length) {
+      grid.innerHTML = '<article class="card"><div class="name">Cotações</div><div class="price">Sem conexão</div><div class="sub">Nenhum preço fictício será exibido.</div></article>';
+    }
+  } finally {
+    refreshButton.disabled = false;
+  }
+}
+refreshButton.addEventListener("click", refresh);
+refresh();
+setInterval(refresh, REFRESH_MS);
 </script>
 </body>
 </html>
